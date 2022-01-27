@@ -9,22 +9,233 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+This is my notes working on Module 8 and from Thursday 1/27/22 class.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+----------------------------------------------------------------------
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+**Working directory**
+Note: Better to set is as the root of all the folders used within the project -> ANT388
+```
+setwd("C:/Users/anais/Desktop/ANT388/")
 
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+**Loading package**
+R: {readxl}, {XLConnect}, {gdata}, {xlsx}, {curl}, {rdrop2}, {repmis}, {googlesheets4}, and {googledrive} {tidyverse}
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```
+library(readxl)
+library(XLConnect)
+library(xlsx)
+library(curl)
+library(rdrop2)
+library(repmis)
+library(googlesheets4)
+library(googledrive)
+library(tidyverse)
+library(data.table)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```
+library(gdata)
+```
+
+!!!ERROR message loading {gdata}: Unable to locate valid perl interpreter -> need to add a perl interpreter - {readxl} is a better package than {gdata now}, more updated
+
+
+**Sending the Path a File**
+
+```
+f <- file.choose()
+
+f <- "Module8/CPDS-1960-2014-reduced.csv"
+d <- read.table(f, header = TRUE, sep =",", stringsAsFactors = FALSE)
+head(d) # shows the first 6 lines of data
+
+d_a <- read.csv(f, header = TRUE, stringsAsFactors = FALSE)
+head(d_a)
+
+tail(d_a) # shows the last 6 lines of data
+
+class(d_a)
+
+f <- "Module8/CPDS-1960-2014-reduced.txt" # specfies a local path
+d_b <- read.table(f, header = TRUE, sep ="\t", stringsAsFactors = FALSE, fill=TRUE)
+# if fill is left as the default (FALSE) then this will throw an error...
+# if TRUE then if the rows have unequal length, blank fields are implicitly added
+head(d_b) # shows the first 6 lines of data
+print(d_b)
+
+d_c <- read.delim(f, header = TRUE, stringsAsFactors = FALSE)
+# for the `read.delim()` function, fill=TRUE by default
+head(d_c)
+```
+
+*Using the {readr} package*
+
+```
+f <- "Module8/CPDS-1960-2014-reduced.txt"
+d_1 <- read_tsv(f, col_names = TRUE) # for tab-separated value files
+head(d_1)
+class(d_1)
+
+#or
+d_2 <- read_delim(f, delim = "\n", col_names = TRUE)
+# for generic delimited files, where the delimiter is a tab ("\t")
+head(d_2)
+```
+
+**Loading Data from Excel Files**
+
+*Using the {readxl} package*
+
+```
+library(readxl)
+f <- "Module8/CPDS-1960-2014-reduced.xlsx"
+d_3 <- read_excel(f, sheet = 1, col_names = TRUE)
+head(d_3)
+
+str(d_3) # `read_excel()` yields a "tibble"
+```
+
+*Using the {XLConnect} package*
+```
+library(XLConnect)
+f <- "data/CPDS-1960-2014-reduced.xlsx"
+d0 <- readWorksheetFromFile(f, sheet = 1, header = TRUE)
+head(d0)
+str(d0)
+
+
+f <- "output.xlsx"
+if (file.exists(f)) {file.remove(f)}
+writeWorksheetToFile(f, d, sheet = "myData", clearSheets = TRUE)
+detach(package:XLConnect)
+```
+
+*Using the {gdata} package*
+```
+library(gdata)
+f <- "CPDS-1960-2014-reduced.xlsx"
+d1 <- read.xls(f, sheet = 1)
+head(d1)
+detach(package:gdata)
+```
+
+!!!!!!!!!! ERROR message:gdata: Unable to locate valid perl interpreter -> need to install perl interpreter
+
+*Using the {xlsx} package*
+```
+library(xlsx)
+f <- "Module8/CPDS-1960-2014-reduced.xlsx"
+d3 <- read.xls(f, sheet = 1)
+head(d3)
+detach(package:xlsx)
+```
+!!!!!!!!!! ERROR message
+
+**Working with Remote Files**
+
+*Using the {curl} Package*
+```
+library(curl)
+f <- curl("https://raw.githubusercontent.com/difiore/ada-2022-datasets/main/CPDS-1960-2014-reduced.csv")
+d4 <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+head(d4)
+
+f <- curl("https://raw.githubusercontent.com/difiore/ada-2022-datasets/main/CPDS-1960-2014-reduced.txt")
+d5 <- read.table(f, header = TRUE, sep="\t", stringsAsFactors = FALSE)
+head(d5)
+```
+
+*Using the {readr} Package*
+```
+f <- "https://raw.githubusercontent.com/difiore/ada-2022-datasets/main/CPDS-1960-2014-reduced.csv"
+d6 <- read_csv(f, col_names = TRUE)
+head(d6)
+
+f <- "https://raw.githubusercontent.com/difiore/ada-2022-datasets/main/CPDS-1960-2014-reduced.txt"
+d7 <- read_tsv(f, col_names = TRUE)
+head(d7)
+```
+*Accessing Files on Dropbox*
+*Accessing Files on Box*
+
+
+*Importing from Google Sheets*
+
+```
+library(googlesheets4)
+sheets_auth() # opens a browser dialog box to ask for authorization...
+f <- sheets_find() %>% filter(name=="CPDS-1960-2014-reduced")
+# find all Google Sheets and filters for one of interest
+sheets_get(f)
+# gets info on the Google Sheets file selected, including the number and
+# names of the different worksheets within the spreadsheet
+d <- sheets_read(f) # reads data from the first sheet in the spreadsheet
+detach(package:googlesheets4)
+```
+
+```
+library(googledrive)
+sheets_get(f)
+d8 <- sheets_read(f) # reads data from the first sheet in the spreadsheet
+detach(package:googledrive)
+head(d8)
+```
+!!!not working because of authorization
+
+
+**Downloading Remote Files**
+
+*Dropbox*
+
+*GoogleDrive*
+
+
+```
+
+library(googledrive)
+f <- "CPDS-1960-2014-reduced.csv" # name of the file to download
+drive_auth()
+```
+usually only needed once, to authorize access
+opens a web browser and has you sign in
+
+to download the file...
+
+!!!! ID PROBLEM - Asks my google drive ID, but does not allows this access - need to re-try it
+
+```
+
+drive_download(f, path = paste0("data/", f), overwrite = TRUE)
+```
+
+this will save the file to a folder called "data" inside the
+current working directory
+
+to search for a file and get info about it
+```
+files <- drive_find(pattern = f, n_max = 1) #
+```
+this example finds a single file, but this might return a tibble
+```
+print(files) # prints a list of files matching the pattern
+
+files$drive_resource # shows metadata about file
+
+id <- files$id # get the Google file id for the file
+id
+```
+to remove a file
+```
+drive_rm(files)
+```
+to upload a file...
+```
+drive_upload(paste0("data/", f), name = "CPDS-1960-2014-reduced.csv", overwrite = TRUE)
+detach(package:googledrive)
+
+```
+
+
